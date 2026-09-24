@@ -1885,7 +1885,7 @@ function isRuntimeSnapshot(value) {
 }
 function trailerHeroRuntimeFactory(nextSettings, injectedTranslations) {
     const runtimeKey = "__trailerHeroRuntime";
-    const runtimeVersion = "1.7.1.1";
+    const runtimeVersion = "1.7.3.1";
     const styleId = "trailerhero-style";
     const videoClass = "trailerhero-video";
     const audioClass = "trailerhero-audio";
@@ -4804,6 +4804,7 @@ class TrailerHeroController {
             steamMovies: this.steamMovies,
             previewUrl: this.previewUrl,
             previewCandidates: this.previewCandidates ?? [],
+            lastPlaybackError: this.lastPlaybackError,
             trimStartSeconds: this.trimStartSeconds,
             trimEndSeconds: this.trimEndSeconds,
             bulkYouTubeInFlight: this.bulkYouTubeInFlight,
@@ -5416,6 +5417,7 @@ class TrailerHeroController {
         this.steamMovies = result.steamMovies ?? [];
         this.previewUrl = result.previewUrl;
         this.previewCandidates = result.previewCandidates ?? [];
+        this.lastPlaybackError = result.lastPlaybackError;
         this.trimStartSeconds = result.trimStartSeconds ?? DEFAULT_TRIM_START_SECONDS;
         this.trimEndSeconds = result.trimEndSeconds ?? DEFAULT_TRIM_END_SECONDS;
         this.emit();
@@ -6820,6 +6822,12 @@ function Content() {
     return SP_JSX.jsxs(DFL.PanelSection, { children: [
         SP_JSX.jsx("style", { children: trailerHeroPageStyles }),
         SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsxs(DFL.Focusable, { className: "thQam", "flow-children": "column", children: [
+            SP_JSX.jsxs("section", { className: "thQamCard thQamStatus", children: [
+                SP_JSX.jsx("div", { children: `Status: ${snapshot.status || "–"}` }),
+                snapshot.appId ? SP_JSX.jsx("div", { children: `AppID: ${snapshot.appId}` }) : null,
+                snapshot.lastPlaybackError ? SP_JSX.jsx("div", { children: snapshot.lastPlaybackError }) : null,
+                SP_JSX.jsx(DFL.DialogButton, { focusable: true, className: "thQamButton", onClick: () => controller.refresh(), children: tr("retryNow") })
+            ] }),
             SP_JSX.jsx("div", { className: "thQamHeading", children: tr("globalSettings") }),
             SP_JSX.jsxs("section", { className: "thQamCard", children: [
                 SP_JSX.jsx(DFL.ToggleField, { label: tr("active"), bottomSeparator: "none", checked: snapshot.settings.enabled, onChange: (checked) => controller.setEnabled(checked) }),
@@ -7317,12 +7325,12 @@ function GameSettingsPage({ appId }) {
         localBrowserReturnFocusRef.current = button || null;
         try {
             const pickerStart = await getLocalTrailerPickerStart().catch(() => null);
-            const startPath = String(pickerStart?.path || "C:/").trim() || "C:/";
+            const startPath = String(pickerStart?.path || "/").trim() || "/";
             await loadLocalBrowserDirectory(startPath);
         }
         catch (error) {
             console.warn("[TrailerHero] Local trailer picker failed", error);
-            await loadLocalBrowserDirectory("C:/");
+            await loadLocalBrowserDirectory("/");
         }
         finally {
             localPickerInFlightRef.current = false;
